@@ -1,0 +1,27 @@
+org: jackshort
+app: ivx-services
+service: ivx-services
+frameworkVersion: '3'
+
+provider:
+    name: aws
+    runtime: nodejs14.x
+
+functions:
+    tokenId:
+        handler: handler.tokenId
+        events:
+            - httpApi:
+                  path: /token/{tokenId}
+                  method: get
+
+    token:
+        handler: handler.token
+        events:
+            - httpApi:
+                  path: /token
+                  method: get
+
+plugins:
+    - serverless-plugin-typescript
+    - serverless-offline
