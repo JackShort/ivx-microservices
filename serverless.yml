@@ -6,6 +6,17 @@ frameworkVersion: '3'
 provider:
     name: aws
     runtime: nodejs14.x
+    environment:
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+        STATUS_TABLE: ivx-status
+    iamRoleStatements:
+        - Effect: Allow
+          Action:
+              - dynamodb:Query
+              - dynamodb:Scan
+              - dynamodb:GetItem
+              - dynamodb:PutItem
+          Resource: 'arn:aws:dynamodb:us-east-1:993518939761:table/ivx-status'
 
 functions:
     tokenId:
@@ -25,3 +36,4 @@ functions:
 plugins:
     - serverless-plugin-typescript
     - serverless-offline
+    - serverless-dynamodb-local
