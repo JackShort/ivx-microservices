@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.1073.0",
+    "node-p5": "^1.0.4",
     "serverless-dynamodb-local": "^0.2.40"
   }
 }

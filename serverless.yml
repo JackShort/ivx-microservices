@@ -16,22 +16,25 @@ provider:
               - dynamodb:Scan
               - dynamodb:GetItem
               - dynamodb:PutItem
-          Resource: 'arn:aws:dynamodb:us-east-1:993518939761:table/ivx-status'
+              - s3:PutObject
+              - s3:PutObjectAcl
+          Resource: '*'
 
 functions:
-    tokenId:
-        handler: handler.tokenId
+    generateMetadata:
+        handler: handler.generateMetadata
         events:
             - httpApi:
-                  path: /token/{tokenId}
-                  method: get
+                  path: /generateMetadata
+                  method: post
 
-    token:
-        handler: handler.token
+    generateImage:
+        handler: handler.generateImage
         events:
-            - httpApi:
-                  path: /token
-                  method: get
+            - s3:
+                  bucket: token.iv-x.xyz
+                  event: s3:ObjectCreated:*
+                  existing: true
 
 plugins:
     - serverless-plugin-typescript
