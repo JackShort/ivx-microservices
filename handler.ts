@@ -1,32 +1,14 @@
 import { Handler } from 'aws-lambda';
-import * as AWS from 'aws-sdk';
-import { Lambda } from 'aws-sdk';
-import { GetItemInput } from 'aws-sdk/clients/dynamodb';
+import { S3 } from 'aws-sdk';
+import { renderMedia } from './renderer';
 
-const s3 = new AWS.S3();
-const docClient = new AWS.DynamoDB.DocumentClient();
-
-async function getItem(params: GetItemInput) {
-    try {
-        const data = await docClient.get(params).promise();
-        return data;
-    } catch (err) {
-        return err;
-    }
-}
+const s3 = new S3();
 
 export const generateMetadata: Handler = async (event: any) => {
     const body = JSON.parse(event.body);
     const to = body['event']['data']['new']['to'];
     const ivxId = body['event']['data']['new']['ivx_id'];
     const tokenId = parseInt(body['event']['data']['new']['token'], 16).toString();
-
-    const params = {
-        TableName: 'ivx-status',
-        Key: {
-            tokenId: tokenId as any,
-        },
-    };
 
     let responseBody = {
         address: to,
@@ -39,48 +21,11 @@ export const generateMetadata: Handler = async (event: any) => {
         body: JSON.stringify(responseBody),
     };
 
-    try {
-        console.log('before data');
-        const data = await getItem(params);
-        console.log('after data');
-        console.log(data);
+    let completed = await generateJson(to, ivxId, tokenId);
 
-        if (Object.keys(data).length == 0) {
-            console.log('BEFORE JSON');
-            let completed = await generateJson(to, ivxId, tokenId);
-
-            console.log('COMPLETED: ' + completed);
-
-            if (!completed) {
-                let responseBody = {
-                    message: 'Was unable to upload json',
-                };
-                response = {
-                    statusCode: 500,
-                    body: JSON.stringify(responseBody),
-                };
-            }
-        } else {
-            let responseBody = {
-                message: 'Already generated metadata',
-            };
-            response = {
-                statusCode: 200,
-                body: JSON.stringify(responseBody),
-            };
-        }
-    } catch {
-        let responseBody = {
-            message: 'Could not fetch data',
-        };
-
-        response = {
-            statusCode: 500,
-            body: JSON.stringify(responseBody),
-        };
+    if (!completed) {
+        throw new Error('Could not generate JSON');
     }
-
-    console.log(response);
 
     return response;
 };
@@ -122,5 +67,21 @@ const generateJson = async (address: string, id: string, tokenId: string) => {
 };
 
 export const generateImage: Handler = async (event: any) => {
-    console.log('GENERATING NOW');
+    const bucket = event.Records[0].s3.bucket.name;
+    const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, ' '));
+    const params = {
+        Bucket: bucket,
+        Key: key,
+    };
+    try {
+        const { ContentType } = await s3.getObject(params).promise();
+        console.log('CONTENT TYPE:', ContentType);
+        return ContentType;
+    } catch (err) {
+        console.log(err);
+        const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
+        console.log(message);
+        throw new Error(message);
+    }
+    //await renderMedia('testing', '123');
 };
