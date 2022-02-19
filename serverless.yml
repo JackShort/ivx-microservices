@@ -18,6 +18,7 @@ provider:
               - dynamodb:PutItem
               - s3:PutObject
               - s3:PutObjectAcl
+              - s3:GetObject
           Resource: '*'
 
 functions:

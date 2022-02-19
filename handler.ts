@@ -1,6 +1,7 @@
 import { Handler } from 'aws-lambda';
 import { S3 } from 'aws-sdk';
 import { renderMedia } from './renderer';
+import fs from 'fs';
 
 const s3 = new S3();
 
@@ -60,9 +61,11 @@ const generateJson = async (address: string, id: string, tokenId: string) => {
         console.log(`File uploaded successfully at https:/` + bucketName + `/` + objectName);
 
         return true;
-    } catch (error) {
-        console.log('error');
-        return false;
+    } catch (err) {
+        console.log(err);
+        const message = `Error getting object ${objectName} from bucket ${bucketName}. Make sure they exist and your bucket is in the same region as this function.`;
+        console.log(message);
+        throw new Error(message);
     }
 };
 
@@ -73,15 +76,42 @@ export const generateImage: Handler = async (event: any) => {
         Bucket: bucket,
         Key: key,
     };
+
+    let data: {};
+
     try {
-        const { ContentType } = await s3.getObject(params).promise();
-        console.log('CONTENT TYPE:', ContentType);
-        return ContentType;
+        const response = await s3.getObject(params).promise();
+        data = JSON.parse(response.Body.toString('utf-8'));
+
+        console.log('FETCHED FROM BUCKET');
     } catch (err) {
         console.log(err);
         const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
         console.log(message);
         throw new Error(message);
     }
-    //await renderMedia('testing', '123');
+
+    const creator = data['creator'];
+    const creatorId = data['creatorIVxID'];
+
+    console.log('--- RENDERING ---');
+    await renderMedia(creator, creatorId);
+
+    console.log('--- UPLOADING ---');
+    const fileContent = fs.readFileSync('/tmp/tmp.png');
+    const uploadParams = {
+        Bucket: 'media.iv-x.xyz',
+        Key: key + '.png',
+        Body: fileContent,
+    };
+
+    try {
+        await s3.putObject(uploadParams).promise();
+        console.log(`File uploaded successfully at https:/` + 'media.iv-x.xyz' + `/` + key + '.png');
+    } catch (err) {
+        console.log(err);
+        const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
+        console.log(message);
+        throw new Error(message);
+    }
 };

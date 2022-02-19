@@ -3,8 +3,9 @@ import keccak256 from 'keccak256';
 
 export const renderMedia = async (address: string, creatorId: string) => {
     const seed = keccak256(keccak256(creatorId + 'x' + address)).toString('hex');
-    const html = generateHTML(seed);
-    await renderImage(html, 20, 2304, 'tmp.png');
+    const data = `let seed = "${seed};"`;
+    const html = generateHTML(data);
+    await renderImage(html, 20000, 2304, '/tmp/tmp.png');
 };
 
 const renderImage = async (html: string, waitTime: number, resolution: number, path: string) => {
