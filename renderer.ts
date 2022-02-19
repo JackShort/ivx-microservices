@@ -2,8 +2,11 @@ import chromium from 'chrome-aws-lambda';
 import keccak256 from 'keccak256';
 
 export const renderMedia = async (address: string, creatorId: string) => {
-    const seed = keccak256(keccak256(creatorId + 'x' + address)).toString('hex');
-    const data = `let seed = "${seed};"`;
+    const seed = keccak256(creatorId + 'x' + address).toString('hex');
+    const data = `let seed = "${seed}";`;
+    console.log(data);
+    console.log(creatorId);
+    console.log(address);
     const html = generateHTML(data);
     await renderImage(html, 20000, 2304, '/tmp/tmp.png');
 };

@@ -103,6 +103,7 @@ export const generateImage: Handler = async (event: any) => {
         Bucket: 'media.iv-x.xyz',
         Key: key + '.png',
         Body: fileContent,
+        ContentType: 'image/png',
     };
 
     try {
