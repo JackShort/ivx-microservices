@@ -39,7 +39,7 @@ const generateJson = async (address: string, id: string, tokenId: string) => {
     metadata['name'] = 'IVX #' + tokenId;
     metadata['description'] = 'PROOF OF MEMBERSHIP TO IVX COLLECTIVE / PROOF OF OWNERSHIP FOR PHYSICAL GOOD';
     metadata['image'] = 'https://media.iv-x.xyz/' + tokenId + '.png';
-    metadata['external_url'] = 'iv-x.xyz';
+    metadata['external_url'] = 'https://iv-x.xyz';
     metadata['attributes'] = [{ DROP: 'STRUCTURED CHAOS' }];
     metadata['creator'] = address;
     metadata['creatorIVxID'] = id;

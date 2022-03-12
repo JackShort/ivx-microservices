@@ -50,7 +50,7 @@ function generateHTML(data: string) {
             let size = 20;
             let multi = 1;
 
-            var backgroundAlpha = 0.2;
+            var backgroundAlpha = 0.125;
             var strokeColor = 'white';
             var fillColor = 'white';
 
@@ -73,7 +73,7 @@ function generateHTML(data: string) {
 
             function draw() {
                 colorMode(HSL);
-                background('#2f2f2e');
+                background('#000000');
                 strokeWeight(((bs / resolution) * 1) / 10);
 
                 input = generateInput();
@@ -181,8 +181,6 @@ function generateHTML(data: string) {
                 var value = '';
                 var grid = [];
                 var row = [];
-
-                console.log(style);
 
                 if (style == 0) {
                 } else if (style == 1) {
