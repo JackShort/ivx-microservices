@@ -37,13 +37,7 @@ export const generateMetadata: Handler = async (event: any) => {
 
 export const redeemToken: Handler = async (event: any) => {
     const body = JSON.parse(event.body);
-    const tokenId = parseInt(body['event']['data']['new']['id'], 16).toString();
-    const redeemed = body['event']['data']['new']['redeemed'];
-
-    if (!redeemed) {
-        console.log('NOT REDEEMED ENDING FUNCTION');
-        return;
-    }
+    const tokenId = parseInt(body['event']['data']['new']['token'], 16).toString();
 
     const bucket = 'token.iv-x.xyz';
     const key = tokenId;
@@ -78,7 +72,7 @@ export const redeemToken: Handler = async (event: any) => {
 
     try {
         await s3.putObject(uploadParams).promise();
-        console.log(`File uploaded successfully at https:/` + 'media.iv-x.xyz' + `/` + key + '.png');
+        console.log(`File uploaded successfully at https:/` + 'token.iv-x.xyz' + `/` + key);
     } catch (err) {
         console.log(err);
         const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
