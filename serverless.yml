@@ -37,6 +37,13 @@ functions:
                   event: s3:ObjectCreated:*
                   existing: true
 
+    redeemToken:
+        handler: handler.redeemToken
+        events:
+            - httpApi:
+                  path: /redeemToken
+                  method: post
+
 plugins:
     - serverless-plugin-typescript
     - serverless-offline

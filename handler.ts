@@ -1,7 +1,9 @@
 import { Handler } from 'aws-lambda';
 import { S3 } from 'aws-sdk';
-import { renderMedia } from './renderer';
 import fs from 'fs';
+import keccak256 from 'keccak256';
+import { renderMedia } from './renderer';
+import Random from './Random';
 
 const s3 = new S3();
 
@@ -9,10 +11,12 @@ export const generateMetadata: Handler = async (event: any) => {
     const body = JSON.parse(event.body);
     const to = body['event']['data']['new']['to'];
     const ivxId = body['event']['data']['new']['ivx_id'];
+    const transactionId = body['event']['data']['new']['id'];
     const tokenId = parseInt(body['event']['data']['new']['token'], 16).toString();
 
     let responseBody = {
         address: to,
+        transactionId: transactionId,
         ivxId: ivxId,
         tokenId: tokenId,
     };
@@ -22,7 +26,7 @@ export const generateMetadata: Handler = async (event: any) => {
         body: JSON.stringify(responseBody),
     };
 
-    let completed = await generateJson(to, ivxId, tokenId);
+    let completed = await generateJson(to, transactionId, ivxId, tokenId);
 
     if (!completed) {
         throw new Error('Could not generate JSON');
@@ -31,16 +35,100 @@ export const generateMetadata: Handler = async (event: any) => {
     return response;
 };
 
-const generateJson = async (address: string, id: string, tokenId: string) => {
-    let metadata = {};
+export const redeemToken: Handler = async (event: any) => {
+    const body = JSON.parse(event.body);
+    const tokenId = parseInt(body['event']['data']['new']['id'], 16).toString();
+    const redeemed = body['event']['data']['new']['redeemed'];
 
-    console.log('here');
+    if (!redeemed) {
+        console.log('NOT REDEEMED ENDING FUNCTION');
+        return;
+    }
+
+    const bucket = 'token.iv-x.xyz';
+    const key = tokenId;
+    const params = {
+        Bucket: bucket,
+        Key: key,
+    };
+
+    let data: {};
+
+    try {
+        const response = await s3.getObject(params).promise();
+        data = JSON.parse(response.Body.toString('utf-8'));
+
+        console.log('FETCHED FROM BUCKET');
+    } catch (err) {
+        console.log(err);
+        const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
+        console.log(message);
+        throw new Error(message);
+    }
+
+    data['attributes'][1]['value'] = 'REDEEMED';
+
+    console.log('--- UPLOADING ---');
+    const uploadParams = {
+        Bucket: bucket,
+        Key: key,
+        Body: JSON.stringify(data, null, 4),
+        ContentType: 'application/json',
+    };
+
+    try {
+        await s3.putObject(uploadParams).promise();
+        console.log(`File uploaded successfully at https:/` + 'media.iv-x.xyz' + `/` + key + '.png');
+    } catch (err) {
+        console.log(err);
+        const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
+        console.log(message);
+        throw new Error(message);
+    }
+};
+
+const generateJson = async (address: string, transactionId: string, id: string, tokenId: string) => {
+    let metadata = {};
+    let attributes = [];
+    attributes.push({ trait_type: 'DROP', value: 'STRUCTURED CHAOS' });
+    attributes.push({ trait_type: 'REDEMPTION STATUS', value: 'NOT REDEEMED' });
+
+    const transactionHash = '0x' + keccak256(transactionId + id + tokenId).toString('hex');
+    console.log(transactionHash);
+    let R = new Random(transactionHash);
+    let colors = ['RED', 'PURPLE', 'BLUE', 'GREEN', 'YELLOW'];
+    let rarity = 'NORMAL';
+
+    let rare = R.random_bool(0.5);
+    let outerColor = 'WHITE';
+    let innerColor = 'WHITE';
+
+    if (rare) {
+        outerColor = R.random_choice(colors);
+        let epic = R.random_bool(0.2);
+        if (epic) {
+            rarity = 'EPIC';
+            innerColor = R.random_choice(
+                colors.filter(function (ele) {
+                    return ele != outerColor;
+                })
+            );
+        } else {
+            let ultraRare = R.random_bool(0.35);
+            rarity = ultraRare ? 'ULTRA RARE' : 'RARE';
+            innerColor = ultraRare ? outerColor : innerColor;
+        }
+    }
+
+    attributes.push({ trait_type: 'RARITY', value: rarity });
+    attributes.push({ trait_type: 'OUTER COLOR', value: outerColor });
+    attributes.push({ trait_type: 'INNER COLOR', value: innerColor });
 
     metadata['name'] = 'IVX #' + tokenId;
     metadata['description'] = 'PROOF OF MEMBERSHIP TO IVX COLLECTIVE / PROOF OF OWNERSHIP FOR PHYSICAL GOOD';
     metadata['image'] = 'https://media.iv-x.xyz/' + tokenId + '.png';
     metadata['external_url'] = 'https://iv-x.xyz';
-    metadata['attributes'] = [{ DROP: 'STRUCTURED CHAOS' }];
+    metadata['attributes'] = attributes;
     metadata['creator'] = address;
     metadata['creatorIVxID'] = id;
 
