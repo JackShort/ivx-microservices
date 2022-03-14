@@ -125,7 +125,7 @@ const generateJson = async (address: string, transactionId: string, id: string, 
             backOutput += black ? '.' : '#';
         }
 
-        backOutput += '\\n';
+        backOutput += '\n';
     }
 
     metadata['name'] = 'IVX #' + tokenId;
