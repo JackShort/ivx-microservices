@@ -118,6 +118,16 @@ const generateJson = async (address: string, transactionId: string, id: string, 
     attributes.push({ trait_type: 'OUTER COLOR', value: outerColor });
     attributes.push({ trait_type: 'INNER COLOR', value: innerColor });
 
+    let backOutput = '';
+    for (let i = 0; i < 12; i++) {
+        for (let j = 0; j < 22; j++) {
+            let black = R.random_bool(0.1);
+            backOutput += black ? '.' : '#';
+        }
+
+        backOutput += '\\n';
+    }
+
     metadata['name'] = 'IVX #' + tokenId;
     metadata['description'] = 'PROOF OF MEMBERSHIP TO IVX COLLECTIVE / PROOF OF OWNERSHIP FOR PHYSICAL GOOD';
     metadata['image'] = 'https://media.iv-x.xyz/' + tokenId + '.png';
@@ -125,6 +135,7 @@ const generateJson = async (address: string, transactionId: string, id: string, 
     metadata['attributes'] = attributes;
     metadata['creator'] = address;
     metadata['creatorIVxID'] = id;
+    metadata['backPrint'] = backOutput;
 
     const objectData = JSON.stringify(metadata, null, 4);
     const bucketName = 'token.iv-x.xyz';
