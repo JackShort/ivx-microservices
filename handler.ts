@@ -186,9 +186,11 @@ export const generateImage: Handler = async (event: any) => {
 
     const creator = data['creator'];
     const creatorId = data['creatorIVxID'];
+    const outsideColor = data['attributes'][3]['value'];
+    const insideColor = data['attributes'][4]['value'];
 
     console.log('--- RENDERING ---');
-    await renderMedia(creator, creatorId);
+    await renderMedia(creator, creatorId, key, outsideColor, insideColor);
 
     console.log('--- UPLOADING ---');
     const fileContent = fs.readFileSync('/tmp/tmp.png');
