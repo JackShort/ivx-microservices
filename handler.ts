@@ -241,7 +241,7 @@ export const generateFrontScreen: Handler = async (event: any) => {
     const insideColor = data['attributes'][4]['value'];
 
     console.log('--- RENDERING ---');
-    await renderPrint(creator, creatorId, key, outsideColor, insideColor);
+    await renderPrint(creator, creatorId, key.substring(0, key.length - 4), outsideColor, insideColor);
 
     console.log('--- UPLOADING ---');
     const fileContent = fs.readFileSync('/tmp/tmp.png');
