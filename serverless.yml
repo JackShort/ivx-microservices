@@ -37,6 +37,14 @@ functions:
                   event: s3:ObjectCreated:*
                   existing: true
 
+    generateFrontScreen:
+        handler: handler.generateFrontScreen
+        events:
+            - s3:
+                  bucket: media.iv-x.xyz
+                  event: s3:ObjectCreated:*
+                  existing: true
+
     redeemToken:
         handler: handler.redeemToken
         events:

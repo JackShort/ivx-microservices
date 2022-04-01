@@ -3,6 +3,7 @@ import { S3 } from 'aws-sdk';
 import fs from 'fs';
 import keccak256 from 'keccak256';
 import { renderMedia } from './renderer';
+import { renderMedia as renderPrint } from './printRenderer';
 import Random from './Random';
 
 const s3 = new S3();
@@ -204,6 +205,56 @@ export const generateImage: Handler = async (event: any) => {
     try {
         await s3.putObject(uploadParams).promise();
         console.log(`File uploaded successfully at https:/` + 'media.iv-x.xyz' + `/` + key + '.png');
+    } catch (err) {
+        console.log(err);
+        const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
+        console.log(message);
+        throw new Error(message);
+    }
+};
+
+export const generateFrontScreen: Handler = async (event: any) => {
+    const bucket = event.Records[0].s3.bucket.name;
+    const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, ' '));
+    const params = {
+        Bucket: 'token.iv-x.xyz',
+        Key: key.substring(0, key.length - 4),
+    };
+
+    let data: {};
+
+    try {
+        const response = await s3.getObject(params).promise();
+        data = JSON.parse(response.Body.toString('utf-8'));
+
+        console.log('FETCHED FROM BUCKET');
+    } catch (err) {
+        console.log(err);
+        const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
+        console.log(message);
+        throw new Error(message);
+    }
+
+    const creator = data['creator'];
+    const creatorId = data['creatorIVxID'];
+    const outsideColor = data['attributes'][3]['value'];
+    const insideColor = data['attributes'][4]['value'];
+
+    console.log('--- RENDERING ---');
+    await renderPrint(creator, creatorId, key, outsideColor, insideColor);
+
+    console.log('--- UPLOADING ---');
+    const fileContent = fs.readFileSync('/tmp/tmp.png');
+    const uploadParams = {
+        Bucket: 'ivx-prints',
+        Key: key,
+        Body: fileContent,
+        ContentType: 'image/png',
+    };
+
+    try {
+        await s3.putObject(uploadParams).promise();
+        console.log(`File uploaded successfully at https:/` + 'ivx-prints' + `/` + key + '.png');
     } catch (err) {
         console.log(err);
         const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
